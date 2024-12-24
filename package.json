@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel deploy"
+    "dev": "serve",
+    "build": "echo 'No build required'"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
   }
 } 
