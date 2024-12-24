@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屏幕共享</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .screen-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+
+        .status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .quality-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        select {
+            padding: 5px;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* 用户界面样式 */
+        .user-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .login-form h2 {
+            margin: 0 0 10px 0;
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        .login-form input {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .login-form input::placeholder {
+            color: #aaa;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #currentUser {
+            color: #4CAF50;
+        }
+
+        #logoutBtn {
+            background: #ff4444;
+        }
+
+        #logoutBtn:hover {
+            background: #cc3333;
+        }
+
+        /* 全屏按钮样式 */
+        .fullscreen-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .screen-container:hover .fullscreen-btn {
+            opacity: 1;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(0,0,0,0.8);
+        }
+
+        /* 全屏模式样式 */
+        .screen-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background: #000;
+        }
+
+        .screen-container.fullscreen video {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+        }
+
+        /* 添加全屏时的控制栏 */
+        .fullscreen-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .screen-container.fullscreen:hover .fullscreen-controls {
+            opacity: 1;
+        }
+
+        .fullscreen-controls .user-info {
+            color: white;
+            font-size: 14px;
+        }
+
+        .fullscreen-controls .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-container" id="userContainer">
+        <div class="login-form" id="loginForm">
+            <h2>登录</h2>
+            <input type="text" id="username" placeholder="用户名">
+            <input type="password" id="password" placeholder="密码">
+            <button id="loginBtn">登录</button>
+            <button id="registerBtn">注册</button>
+        </div>
+        <div class="user-info" id="userInfo" style="display: none;">
+            <span id="currentUser"></span>
+            <button id="logoutBtn">退出</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <button id="startShare">开始共享屏幕</button>
+            <button id="stopShare" disabled>停止共享</button>
+            <button id="startRecord">开始录制</button>
+            <button id="stopRecord" disabled>停止录制</button>
+        </div>
+
+        <div class="screen-container">
+            <video id="screenVideo" autoplay muted></video>
+            <div class="status" id="status">未开始共享</div>
+            <button class="fullscreen-btn" id="fullscreenBtn">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="quality-controls">
+            <div>
+                <label for="frameRate">帧率:</label>
+                <select id="frameRate">
+                    <option value="15">15 FPS</option>
+                    <option value="30" selected>30 FPS</option>
+                    <option value="60">60 FPS</option>
+                </select>
+            </div>
+            <div>
+                <label for="resolution">分辨率:</label>
+                <select id="resolution">
+                    <option value="720">720p</option>
+                    <option value="1080" selected>1080p</option>
+                    <option value="2160">4K</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="info" id="info"></div>
+    </div>
+
+    <script src="screen-share.js"></script>
+</body>
+</html> 
