@@ -6,10 +6,10 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/screen-share.html"
+      "source": "/(.*)",
+      "destination": "/screen-share.html"
     }
   ],
   "headers": [
